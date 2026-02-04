@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schulden-Prävention: Chat-Simulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #app-container { width: 100%; max-width: 400px; background: white; height: 90vh; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        
+        /* Start Screen */
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; text-align: center; }
+        #start-screen h1 { color: #333; margin-bottom: 20px; }
+        #student-name { padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 80%; font-size: 16px; margin-bottom: 15px; }
+        #start-btn { padding: 10px 20px; background-color: #0084ff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        #start-btn:hover { background-color: #006bcf; }
+
+        /* Header */
+        header { background-color: #0084ff; color: white; padding: 15px; text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        #finish-btn { background: #ff4757; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+
+        /* Chat Area */
+        #chat-history { flex: 1; overflow-y: auto; padding: 15px; background: #e5ddd5; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 80%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.4; position: relative; word-wrap: break-word; }
+        .message.bot { background: white; align-self: flex-start; border-bottom-left-radius: 0; }
+        .message.user { background: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 0; }
+        .sender-name { font-size: 10px; color: #666; margin-bottom: 2px; display: block; }
+
+        /* Input Area */
+        #input-area { padding: 10px; background: #f0f0f0; display: flex; gap: 10px; border-top: 1px solid #ddd; }
+        #user-input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
+        #send-btn { background: #0084ff; color: white; border: none; padding: 10px 15px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+        #send-btn:disabled { background: #ccc; cursor: default; }
+
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <!-- Start Screen -->
+    <div id="start-screen">
+        <h1>Schulden-Prävention</h1>
+        <p>Simulation: Argumentiere gegen einen unüberlegten Kredit.</p>
+        <input type="text" id="student-name" placeholder="Dein Vorname" />
+        <button id="start-btn" onclick="startGame()">Chat Starten</button>
+    </div>
+
+    <!-- Chat Interface -->
+    <header>
+        <span>Chat mit Max 📱</span>
+        <button id="finish-btn" onclick="generatePDF()">PDF speichern</button>
+    </header>
+
+    <div id="chat-history"></div>
+
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="Schreibe eine Nachricht..." onkeypress="handleKeyPress(event)" />
+        <button id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+</div>
+
+<script>
+    let studentName = "";
+    const botName = "Max";
+    const chatHistory = document.getElementById('chat-history');
+    const userInput = document.getElementById('user-input');
+    
+    // Einfache Bot-Logik
+    const botResponses = [
+        "Aber guck mal, alle aus der Klasse haben das neue Modell! Ich seh voll blöd aus mit meinem alten Schrott.",
+        "Das sind doch nur 40 Euro im Monat. Das merk ich doch gar nicht!",
+        "Ach was, ich krieg doch bald Geburtstagskosten von Oma, davon zahl ich die ersten Raten.",
+        "Null Prozent Finanzierung ist doch geschenktes Geld! Warum sollte ich warten und sparen?",
+        "Du bist immer so vernünftig... Spaßbremse! 😉 Aber was passiert denn schlimmstenfalls?",
+        "Hm, okay... Wenn ich mal kein Geld hab, zahl ich halt einen Monat nicht. Ist doch nicht schlimm, oder?",
+        "Vielleicht hast du Recht. Ich will halt nicht in so eine Schuldenfalle tappen wie im Film."
+    ];
+    let responseIndex = 0;
+
+    function startGame() {
+        const nameField = document.getElementById('student-name');
+        if (nameField.value.trim() === "") {
+            alert("Bitte gib deinen Vornamen ein!");
+            return;
+        }
+        studentName = nameField.value.trim();
+        document.getElementById('start-screen').style.display = 'none';
+        
+        setTimeout(() => {
+            addMessage(botName, "Hey " + studentName + "! 😃 Ich muss dir was zeigen! Ich hol mir jetzt das neue iPhone Pro Max. Kostet zwar 1400€, aber es gibt so ne 0%-Finanzierung. Unterschreib ich sofort, oder? 🤩", 'bot');
+        }, 500);
+    }
+
+    function addMessage(sender, text, type) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${type}`;
+        msgDiv.innerHTML = `<span class="sender-name">${sender}</span>${text}`;
+        chatHistory.appendChild(msgDiv);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function sendMessage() {
+        const text = userInput.value.trim();
+        if (text === "") return;
+
+        addMessage(studentName, text, 'user');
+        userInput.value = "";
+
+        setTimeout(() => {
+            if (responseIndex < botResponses.length) {
+                addMessage(botName, botResponses[responseIndex], 'bot');
+                responseIndex++;
+            } else {
+                addMessage(botName, "Danke, dass du mir den Kopf gewaschen hast! Ich lass das lieber. 👍", 'bot');
+            }
+        }, 1500 + Math.random() * 1000);
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+
+    // PDF Generierung (Optimiert)
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18);
+        doc.text("Chat-Protokoll: Schulden-Prävention", 10, 15);
+        
+        doc.setFontSize(12);
+        doc.text(`Schüler/in: ${studentName}`, 10, 25);
+        doc.text(`Thema: Argumentation gegen Impulskauf auf Kredit`, 10, 32);
+        doc.line(10, 35, 200, 35);
+
+        let yPos = 45;
+        const pageHeight = doc.internal.pageSize.height;
+        const messages = chatHistory.children;
+
+        for (let i = 0; i < messages.length; i++) {
+            const msg = messages[i];
+            const isUser = msg.classList.contains('user');
+            const sender = isUser ? studentName : botName;
+            
+            // Text extrahieren (ohne Namen-Span)
+            const clone = msg.cloneNode(true);
+            const span = clone.querySelector('.sender-name');
+            if (span) span.remove();
+            let text = clone.innerText.trim();
+            
+            // Emojis entfernen für sauberes PDF (verursachen oft Layout-Fehler in Standard-Fonts)
+            text = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
+
+            doc.setFont("helvetica", isUser ? "bold" : "normal");
+            doc.setTextColor(isUser ? "#000000" : "#555555");
+            
+            const prefix = isUser ? ">> " : "";
+            const content = `${prefix}${sender}: ${text}`;
+            
+            // Text umbrechen (Breite 170mm)
+            const splitText = doc.splitTextToSize(content, 170);
+            const blockHeight = splitText.length * 7;
+
+            // Prüfen ob Block noch auf Seite passt
+            if (yPos + blockHeight > pageHeight - 20) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            doc.text(splitText, 10, yPos);
+            yPos += blockHeight + 5;
+        }
+
+        doc.save(`Chat_Protokoll_${studentName}.pdf`);
+    }
+</script>
+
+</body>
+</html>
